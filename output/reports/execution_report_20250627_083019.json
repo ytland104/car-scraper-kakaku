@@ -1,0 +1,17 @@
+{
+  "execution_time": "2025-06-27T08:21:48.276395",
+  "duration_minutes": 0.0,
+  "success": true,
+  "records_processed": 1193,
+  "errors": [],
+  "warnings": [],
+  "system_resources": {
+    "timestamp": "2025-06-27T08:30:18.887977",
+    "warnings": [],
+    "cpu_percent": 31.5,
+    "memory_percent": 78.5,
+    "memory_available_gb": 3.44,
+    "disk_free_gb": 37.3,
+    "disk_used_percent": 72.14
+  }
+}

@@ -1,0 +1,21 @@
+# Car Maker Selection Configuration
+# 車メーカー選択設定
+# 
+# 設定方法:
+# - 1行に1つのメーカーインデックスを記載
+# - 範囲指定: 0-5 (0から5まで)
+# - コメント行: # で始める
+# - 空行は無視されます
+
+# Example: Process first 3 car makers
+0
+1
+2
+
+# Example: Process specific range
+# 5-10
+
+# Example: Process specific makers
+# 0  # トヨタ
+# 2  # ホンダ
+# 5  # 日産

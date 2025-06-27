@@ -1,0 +1,23 @@
+# Car Scraper Cron Jobs
+# 車データスクレイピング定期実行設定
+#
+# 使用方法:
+# 1. 以下の設定をコピーして crontab -e で編集
+# 2. パスとスケジュールを必要に応じて変更
+# 3. 初回はテストモードで実行することを推奨
+
+# Weekly execution (Sundays at 3:00 AM)
+# 週次実行（日曜日 午前3時）
+0 3 * * 0 cd /Users/yutaka/Library/CloudStorage/GoogleDrive-ytland104@gmail.com/マイドライブ/Colab Notebooks/Utility_tool/CarwebScraping/WebScrapingPriceAnalysis/car_scraper && /Users/yutaka/.pyenv/shims/python3 scheduled_scraper.py >> logs/cron.log 2>&1
+
+# Daily execution (2:00 AM)
+# 日次実行（午前2時）
+# 0 2 * * * cd /Users/yutaka/Library/CloudStorage/GoogleDrive-ytland104@gmail.com/マイドライブ/Colab Notebooks/Utility_tool/CarwebScraping/WebScrapingPriceAnalysis/car_scraper && /Users/yutaka/.pyenv/shims/python3 scheduled_scraper.py >> logs/cron.log 2>&1
+
+# Monthly execution (1st day of month at 1:00 AM)
+# 月次実行（毎月1日 午前1時）
+# 0 1 1 * * cd /Users/yutaka/Library/CloudStorage/GoogleDrive-ytland104@gmail.com/マイドライブ/Colab Notebooks/Utility_tool/CarwebScraping/WebScrapingPriceAnalysis/car_scraper && /Users/yutaka/.pyenv/shims/python3 scheduled_scraper.py >> logs/cron.log 2>&1
+
+# Health check (daily at 6:00 AM)
+# ヘルスチェック（毎日 午前6時）
+0 6 * * * cd /Users/yutaka/Library/CloudStorage/GoogleDrive-ytland104@gmail.com/マイドライブ/Colab Notebooks/Utility_tool/CarwebScraping/WebScrapingPriceAnalysis/car_scraper && /Users/yutaka/.pyenv/shims/python3 scheduled_scraper.py --health-check >> logs/health_check.log 2>&1
