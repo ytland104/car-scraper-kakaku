@@ -1,0 +1,8 @@
+# Car Maker Selection Configuration
+# Generated on: 2025-10-30 08:14:49
+# Format: One index per line, ranges (0-5), or car maker names
+
+1  # BMW
+8  # スズキ
+13  # トヨタ
+33  # レクサス

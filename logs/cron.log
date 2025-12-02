@@ -1,3 +1,0 @@
-2025-06-27 10:52:09,649 - ScheduledScraper - INFO - run_scheduled_scraping:268 - === Scheduled scraping started ===
-2025-06-27 10:52:10,655 - ScheduledScraper - INFO - run_scheduled_scraping:272 - System resources: {'timestamp': '2025-06-27T10:52:09.649934', 'warnings': [], 'cpu_percent': 18.2, 'memory_percent': 81.3, 'memory_available_gb': 3.0, 'disk_free_gb': 36.13, 'disk_used_percent': 72.22}
-2025-06-27 10:52:10,655 - ScheduledScraper - INFO - run_scheduled_scraping:284 - DRY RUN MODE - No actual scraping will be performed

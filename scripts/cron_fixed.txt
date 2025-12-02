@@ -1,0 +1,7 @@
+# Car Scraper - Fixed Configuration
+SHELL=/bin/bash
+PATH=/Users/yutaka/.pyenv/shims:/Users/yutaka/.local/bin:/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+# Weekly execution on Sunday at 3:00 AM (Fixed with absolute paths)
+0 3 * * 0 cd /Users/yutaka/car_scraper_link && /Users/yutaka/.pyenv/shims/python3 scheduled_scraper.py >> /Users/yutaka/car_scraper_link/logs/cron.log 2>&1 

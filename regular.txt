@@ -1,0 +1,10 @@
+# Car Maker Selection Configuration
+# Generated on: 2025-09-30 18:14:12
+# Format: One index per line, ranges (0-5), or car maker names
+
+8  # スズキ
+9  # スバル
+10  # ダイハツ
+13  # トヨタ
+33  # レクサス
+35  # 三菱

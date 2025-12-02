@@ -1,0 +1,14 @@
+# Car Maker Selection Configuration
+# Generated on: 2025-11-16 06:17:27
+# Format: One index per line, ranges (0-5), or car maker names
+
+1  # BMW
+8  # スズキ
+13  # トヨタ
+16  # フェラーリ
+23  # ポルシェ
+24  # マクラーレン
+31  # ランボルギーニ
+33  # レクサス
+35  # 三菱
+36  # 日産

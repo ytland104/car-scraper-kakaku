@@ -115,9 +115,13 @@ class CarDataScraper:
         
         return session
         
-    def load_and_filter_data(self) -> pd.DataFrame:
+    def load_and_filter_data(self, min_year: int = 2005, apply_filter: bool = True) -> pd.DataFrame:
         """
         Load and filter car data from CSV file
+        
+        Args:
+            min_year: Minimum year for filtering (default: 2005)
+            apply_filter: Whether to apply year-based filtering (default: True)
         
         Returns:
             Filtered DataFrame with car maker data
@@ -146,22 +150,30 @@ class CarDataScraper:
             if missing_columns:
                 raise DataValidationError(f"Missing required columns: {missing_columns}")
             
+            logger.info(f"Loaded {len(all_makers_df)} total records from CSV")
+            
             # Extract model year from '年' column
             all_makers_df['model_year'] = all_makers_df['年'].str.extract(r'(\d{4})').astype(float)
             
-            # Apply custom filter for specific car makers
-            def custom_filter(row):
-                try:
-                    if row['CarMaker'] in ['日産', 'ホンダ', 'スバル', 'フェラーリ']:
-                        return True
-                    else:
-                        return row['model_year'] >= 2005
-                except (KeyError, TypeError):
-                    logger.warning(f"Error applying filter to row: {row}")
-                    return False
-                    
-            # Apply filtering
-            self.filtered_df = all_makers_df[all_makers_df.apply(custom_filter, axis=1)]
+            if apply_filter:
+                # Apply custom filter for specific car makers
+                def custom_filter(row):
+                    try:
+                        if row['CarMaker'] in ['日産', 'ホンダ', 'スバル', 'フェラーリ']:
+                            return True
+                        else:
+                            return row['model_year'] >= min_year
+                    except (KeyError, TypeError):
+                        logger.warning(f"Error applying filter to row: {row}")
+                        return False
+                        
+                # Apply filtering
+                self.filtered_df = all_makers_df[all_makers_df.apply(custom_filter, axis=1)]
+                logger.info(f"After filtering (min_year={min_year}): {len(self.filtered_df)} records")
+            else:
+                # No filtering applied
+                self.filtered_df = all_makers_df
+                logger.info(f"No filtering applied: {len(self.filtered_df)} records")
             
             if self.filtered_df.empty:
                 raise DataValidationError("No data remaining after filtering")
@@ -176,6 +188,68 @@ class CarDataScraper:
         except Exception as e:
             logger.error(f"Error loading and filtering data: {e}")
             raise
+    
+    def load_data_without_filter(self) -> pd.DataFrame:
+        """
+        Load car data from CSV file without applying any filters
+        
+        Returns:
+            DataFrame with all car data
+            
+        Raises:
+            FileNotFoundError: If CSV file doesn't exist
+            DataValidationError: If data validation fails
+        """
+        return self.load_and_filter_data(min_year=2005, apply_filter=False)
+    
+    def compare_csv_files(self, csv_path1: str, csv_path2: str) -> dict:
+        """
+        Compare two CSV files and show differences
+        
+        Args:
+            csv_path1: Path to first CSV file
+            csv_path2: Path to second CSV file
+            
+        Returns:
+            Dictionary with comparison results
+        """
+        try:
+            # Load both files
+            df1 = pd.read_csv(csv_path1)
+            df2 = pd.read_csv(csv_path2)
+            
+            # Basic statistics
+            comparison = {
+                'file1': {
+                    'path': csv_path1,
+                    'total_records': len(df1),
+                    'unique_makers': df1['CarMaker'].nunique() if 'CarMaker' in df1.columns else 0,
+                    'maker_counts': df1['CarMaker'].value_counts().to_dict() if 'CarMaker' in df1.columns else {}
+                },
+                'file2': {
+                    'path': csv_path2,
+                    'total_records': len(df2),
+                    'unique_makers': df2['CarMaker'].nunique() if 'CarMaker' in df2.columns else 0,
+                    'maker_counts': df2['CarMaker'].value_counts().to_dict() if 'CarMaker' in df2.columns else {}
+                }
+            }
+            
+            # Calculate differences
+            comparison['differences'] = {
+                'record_difference': len(df2) - len(df1),
+                'maker_difference': comparison['file2']['unique_makers'] - comparison['file1']['unique_makers']
+            }
+            
+            logger.info(f"CSV Comparison Results:")
+            logger.info(f"  {csv_path1}: {len(df1)} records, {comparison['file1']['unique_makers']} makers")
+            logger.info(f"  {csv_path2}: {len(df2)} records, {comparison['file2']['unique_makers']} makers")
+            logger.info(f"  Difference: {comparison['differences']['record_difference']} records")
+            
+            return comparison
+            
+        except Exception as e:
+            logger.error(f"Error comparing CSV files: {e}")
+            return {'error': str(e)}
     
     def get_html(self, url: str, max_retries: int = MAX_RETRIES) -> Optional[BeautifulSoup]:
         """
@@ -1411,7 +1485,7 @@ class CarDataScraper:
                     
                     if invalid_indices:
                         print(f"⚠️  Invalid indices: {invalid_indices} (max: {max_index})")
-                    continue
+                        continue
                     
                     # Confirm selection
                     selected_makers = carmaker_info[carmaker_info['Index'].isin(valid_indices)]
@@ -1447,6 +1521,10 @@ class CarDataScraper:
         indices = []
         
         try:
+            # Handle empty or whitespace-only input
+            if not selection or not selection.strip():
+                return []
+                
             # Check if it's car maker names
             if any(char.isalpha() and ord(char) > 127 for char in selection):  # Contains Japanese characters
                 return self._parse_carmaker_names(selection)
@@ -1457,6 +1535,10 @@ class CarDataScraper:
             for part in parts:
                 part = part.strip()
                 
+                # Skip empty parts
+                if not part:
+                    continue
+                    
                 if '-' in part:
                     # Range selection (e.g., "0-5")
                     start, end = map(int, part.split('-'))
@@ -1517,6 +1599,13 @@ class CarDataScraper:
                 line = line.strip()
                 if line and not line.startswith('#'):  # Skip comments and empty lines
                     try:
+                        # Remove inline comments (everything after #)
+                        if '#' in line:
+                            line = line.split('#')[0].strip()
+                        
+                        if not line:  # Skip if line becomes empty after removing comment
+                            continue
+                            
                         if line.isdigit():
                             indices.append(int(line))
                         elif '-' in line:
@@ -1683,7 +1772,7 @@ def main():
         
         # Initialize scraper with updated output directory
         scraper = CarDataScraper(
-            csv_path="allmaker_url1016.csv",
+            csv_path="allmaker_url20251031.csv",
             output_dir="output"  # Updated path
         )
         
@@ -1709,7 +1798,9 @@ def main():
         print("  3. Quick test - Process specific car maker with age filter")
         print("  4. Compare old vs new method")
         
-        choice = input("\nEnter your choice (1-4): ").strip()
+        print("  5. Compare CSV files (allmaker_url1016.csv vs allmaker_url20251022.csv)")
+        
+        choice = input("\nEnter your choice (1-5): ").strip()
         
         if choice == "1":
             print("Age filter test already completed above.")
@@ -1778,7 +1869,7 @@ if __name__ == "__main__":
     try:
         # Initialize with custom parameters
         scraper = CarDataScraper(
-            csv_path="allmaker_url1016.csv",
+            csv_path="allmaker_url20251022.csv",
             output_dir="output"  # Updated path
         )
         
@@ -1804,7 +1895,9 @@ if __name__ == "__main__":
         print("  3. Quick test - Process specific car maker with age filter")
         print("  4. Compare old vs new method")
         
-        choice = input("\nEnter your choice (1-4): ").strip()
+        print("  5. Compare CSV files (allmaker_url1016.csv vs allmaker_url20251022.csv)")
+        
+        choice = input("\nEnter your choice (1-5): ").strip()
         
         if choice == "1":
             print("Age filter test already completed above.")
