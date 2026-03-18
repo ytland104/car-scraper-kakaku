@@ -12,6 +12,7 @@ logs/*.txt
 
 # Output files
 output/*.csv
+output/carsensor/
 output/reports/*.json
 output/archive/
 output/current/
@@ -38,4 +39,16 @@ Thumbs.db
 *.tmp
 *.bak
 *.backup
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -9,8 +9,9 @@ scheduler:
   retry_delay: 300                # 5分（秒）
 
 data_management:
-  output_dir: "output"
-  output_retention_days: 90       # 3ヶ月
+  # 仕様どおり Documents/csv/expectedPrice に出力（相対パス "output" だとプロジェクト直下になる）
+  output_dir: "/Users/yutaka/Documents/csv/expectedPrice"
+  output_retention_days: 3650     # 10年（事実上削除しない）
   log_retention_days: 30          # 1ヶ月
   backup_enabled: true
   backup_frequency: "weekly"      # daily, weekly, monthly

@@ -44,14 +44,17 @@ except ImportError as e:
 class ScheduledScraper:
     """定期実行用のラッパークラス"""
     
-    def __init__(self, config_path: str = "config/scheduler_config.yml"):
+    def __init__(self, config_path: str = "config/scheduler_config.yml", carmaker_config_path: Optional[str] = None):
         """
         Initialize ScheduledScraper
         
         Args:
-            config_path: Path to configuration file
+            config_path: Path to scheduler configuration file
+            carmaker_config_path: Path to car maker selection file (default: config/carmaker_selection.txt).
+                                   Used when target_carmakers is "config".
         """
         self.config_path = config_path
+        self.carmaker_config_path = carmaker_config_path or "config/carmaker_selection.txt"
         self.config = {}
         self.start_time = datetime.now()
         self.execution_stats = {
@@ -354,8 +357,8 @@ class ScheduledScraper:
             return carmaker_info['Index'].tolist()
             
         elif target_mode == 'config':
-            # Load from configuration file
-            config_file = "config/carmaker_selection.txt"
+            # Load from configuration file（--carmaker-config で別ファイル指定可能）
+            config_file = self.carmaker_config_path
             if os.path.exists(config_file):
                 return self.scraper.load_carmaker_config(config_file)
             else:
@@ -369,7 +372,8 @@ class ScheduledScraper:
     def _generate_execution_report(self):
         """実行レポートの生成"""
         try:
-            report_dir = Path("output/reports")
+            out_dir = self.config.get('data_management', {}).get('output_dir', 'output')
+            report_dir = Path(out_dir) / "reports"
             report_dir.mkdir(parents=True, exist_ok=True)
             
             report_data = {
@@ -395,11 +399,16 @@ class ScheduledScraper:
     def _cleanup_old_data(self):
         """古いデータのクリーンアップ"""
         try:
-            retention_days = self.config.get('data_management', {}).get('output_retention_days', 90)
+            retention_days = self.config.get('data_management', {}).get('output_retention_days', 3650)
+            
+            # 0以下の場合はクリーンアップしない
+            if retention_days <= 0:
+                return
+
             cutoff_date = datetime.now() - timedelta(days=retention_days)
             
-            # Clean up old output files
-            output_dir = Path("output")
+            # Clean up old output files（config の output_dir を使用）
+            output_dir = Path(self.config.get('data_management', {}).get('output_dir', 'output'))
             if output_dir.exists():
                 for file_path in output_dir.rglob("*.csv"):
                     try:
@@ -588,8 +597,8 @@ Car Data Scraper - Automated Execution
                 }
                 health_status['status'] = 'unhealthy'
             
-            # Output directory check
-            output_dir = Path("output")
+            # Output directory check（config の output_dir を使用）
+            output_dir = Path(self.config.get('data_management', {}).get('output_dir', 'output'))
             if output_dir.exists() and output_dir.is_dir():
                 health_status['checks']['output_directory'] = {'status': 'ok'}
             else:
@@ -613,7 +622,11 @@ def main():
     parser = argparse.ArgumentParser(description='Scheduled Car Data Scraper')
     parser.add_argument('--config', '-c', 
                        default='config/scheduler_config.yml',
-                       help='Configuration file path')
+                       help='Scheduler configuration file path')
+    parser.add_argument('--carmaker-config',
+                       default=None,
+                       metavar='PATH',
+                       help='Car maker selection file (default: config/carmaker_selection.txt). Use for second cron with other makers.')
     parser.add_argument('--dry-run', '-d', 
                        action='store_true',
                        help='Dry run mode (no actual scraping)')
@@ -631,7 +644,10 @@ def main():
     
     try:
         # Initialize scheduler
-        scheduler = ScheduledScraper(config_path=args.config)
+        scheduler = ScheduledScraper(
+            config_path=args.config,
+            carmaker_config_path=args.carmaker_config
+        )
         
         if args.health_check:
             # Run health check

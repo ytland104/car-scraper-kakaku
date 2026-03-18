@@ -1,0 +1,3 @@
+0 16 * * 1 cd "/Users/yutaka/Library/CloudStorage/GoogleDrive-ytland104@gmail.com/マイドライブ/Colab Notebooks/Utility_tool/Youtube_access/youtube_summarizer" && ./run_weekly_channel_summary.sh >> /Users/yutaka/cron/logs/cron.log 2>&1
+0 23 * * 2 CRON_INVOKED=1 /Users/yutaka/car_scraper_link/run_scheduler.sh >> /Users/yutaka/car_scraper_link/logs/cron.log 2>&1
+0 23 * * 3 CRON_INVOKED=1 /Users/yutaka/car_scraper_link/run_scheduler.sh config/carmaker_selection_other.txt >> /Users/yutaka/car_scraper_link/logs/cron.log 2>&1

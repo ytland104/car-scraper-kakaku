@@ -1,0 +1,34 @@
+{
+  "maker_code": "BM",
+  "maker_name": "BMW",
+  "models": {
+    "033": {
+      "name": "M3セダン",
+      "code": "033",
+      "model_years": {
+        "002": {
+          "name": "2014年02月～2018年12月",
+          "code": "002",
+          "grades": {
+            "grade_001": {
+              "name": "コンペティション インディビジュアルカラー",
+              "code": "grade_001"
+            },
+            "grade_002": {
+              "name": "コンペティション M",
+              "code": "grade_002"
+            },
+            "grade_003": {
+              "name": "M DCT",
+              "code": "grade_003"
+            },
+            "grade_004": {
+              "name": "コンペティション ブラックメリノレザー",
+              "code": "grade_004"
+            }
+          }
+        }
+      }
+    }
+  }
+}

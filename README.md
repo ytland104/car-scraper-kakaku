@@ -2,6 +2,35 @@
 
 価格.comから車両データを効率的にスクレイピングする強化されたツールです。37のカーメーカーから任意に選択して処理できる柔軟な選択機能を搭載しています。
 
+## 🐍 **仮想環境（推奨）**
+
+このプロジェクトは **`/Users/yutaka/myenv/venv`** の仮想環境で動かす想定です。
+
+### 手動で実行するとき
+```bash
+source /Users/yutaka/myenv/venv/bin/activate
+cd /path/to/car_scraper   # または car_scraper_link
+python main.py
+```
+
+国産メーカー設定（`mainbrand.txt`）でそのまま走ります。
+
+### 仮想環境をまだ作っていない場合
+```bash
+python3 -m venv /Users/yutaka/myenv/venv
+source /Users/yutaka/myenv/venv/bin/activate
+pip install -r requirements.txt
+```
+既に `myenv/venv` を他プロジェクトと共有している場合は、そのまま `source` して `main.py` を実行すれば大丈夫です。
+
+### cron（run_scheduler.sh）
+`run_scheduler.sh` は **同じ仮想環境の python を直接指定**して動かします（cron では `source activate` が効きにくいため）。  
+別の venv を使う場合は環境変数で上書きできます:
+```bash
+export CAR_SCRAPER_VENV=/path/to/your/venv
+./run_scheduler.sh
+```
+
 ## 🚀 **簡単な使い方（推奨）**
 
 ### **1. カーメーカー一覧確認**
@@ -33,7 +62,10 @@ scraper.process_by_carmaker(carmaker_indices=[0])
 
 ```
 car_scraper/
-├── car_scraper.py          # 🎯 メイン実行ファイル
+├── main.py                 # 🎯 手動実行用エントリ（国産メーカー config で実行）
+├── run_scheduler.sh        # ⏰ cron 用エントリ（仮想環境を利用）
+├── car_scraper.py          # メインスクレイパーモジュール
+├── scheduled_scraper.py    # 定期実行用ラッパー（cron から run_scheduler.sh 経由で利用）
 ├── allmaker_url1016.csv    # 📊 車両データソース
 ├── config/                  # ⚙️ 設定ファイル
 │   ├── carmaker_selection.txt          # 現在の選択設定
@@ -63,18 +95,19 @@ scraper.process_selected_carmakers(selection_method="interactive")
 
 ### **設定ファイル使用**
 ```python
+from car_scraper import CarDataScraper
 # 国産メーカーのみ処理
-scraper.process_selected_carmakers(
-    selection_method="config", 
-    config_file="config/carmaker_selection_japanese.txt"
-)
+scraper = CarDataScraper()
+scraper.process_selected_carmakers(selection_method="config", config_file="mainbrand.txt")
 ```
 
 ### **直接指定**
 ```python
+from car_scraper import CarDataScraper
 # 特定のインデックスを直接指定
 # selected_indices = [13,33,1,26]
 selected_indices = [0,1,9,21,36]
+scraper = CarDataScraper()
 scraper.process_selected_carmakers(
     selection_method="indices", 
     indices=selected_indices
@@ -124,6 +157,30 @@ scraper = CarDataScraper(
 - 効率的なエラー処理とリトライ
 - 詳細な進捗追跡
 - メモリ使用量の最適化
+
+## ⏰ **定期実行（cron）**
+
+他プロジェクトと同様に、**cron からは `run_scheduler.sh` を叩く**方式にしています。
+
+1. **実行権限を付与**
+   ```bash
+   chmod +x run_scheduler.sh
+   ```
+2. **cron の設定**（`crontab -e`）
+   - `scripts/cron_template.txt` または `scripts/cron_fixed.txt` の内容をコピー
+   - `BASE=` を、実際のプロジェクトパス（またはシンボリックリンク `car_scraper_link`）に合わせる
+
+**cron が動かないときのチェックリスト**
+
+- `car_scraper_link` を使っている場合、シンボリックリンクが正しくプロジェクトを指しているか
+- `run_scheduler.sh` がプロジェクトルートにあり、実行権限があるか
+- `logs/` が存在するか（`run_scheduler.sh` が自動作成します）
+- macOS: システム環境設定 → プライバシーとセキュリティ → **フルディスクアクセス** に Terminal や cron を追加しているか
+
+## 🖥️ **バックグラウンド実行**
+
+このスクレイパーは **requests + BeautifulSoup のみ** 使用しており、ブラウザ（Selenium）は使っていません。  
+そのため **ディスプレイ不要で、cron やバックグラウンドで問題なく動作** します（ヘッドレス対応は不要です）。
 
 ## 🚨 **注意事項**
 

@@ -1,0 +1,35 @@
+# Car Scraper - crontab の二重実行について
+
+## 結論
+- プログラムは「1回の実行でメーカーリストを2周する」仕様にはなっていません。
+- 重複の原因は **crontab に同じスクレイプが2本入っていること** です。
+
+## 現在の crontab で Car Scraper が動く行（2本）
+
+1. **日曜 3:00**  
+   `0 3 * * 0 cd /Users/yutaka/car_scraper_link && ... python3 scheduled_scraper.py`  
+   → 旧形式（run_scheduler.sh 未使用）、carmaker_selection.txt のメーカー
+
+2. **火曜 23:00**  
+   `0 23 * * 2 CRON_INVOKED=1 cd ".../car_scraper" && ./run_scheduler.sh`  
+   → 新形式、同じく carmaker_selection.txt のメーカー（引数なし）
+
+この2本が両方動くため、**同じ10メーカーが週に2回**スクレイプされ、同じファイル名（日付_モデル名.csv）に上書き／再取得されます。
+
+## 対応案
+
+- **週1回だけ同じメーカーで回したい**  
+  → どちらか **1本だけ残す**（推奨: 火曜 23:00 の run_scheduler.sh の方だけ残し、日曜 3:00 の行は削除）。
+
+- **日曜＝選択メーカー、水曜＝選択外メーカー** のように分けたい  
+  - 日曜: `./run_scheduler.sh`（引数なし）  
+  - 水曜: `./run_scheduler.sh config/carmaker_selection_other.txt`  
+  のように **2本とも run_scheduler.sh に統一**し、日曜の「旧形式」の行は削除する。
+
+## 修正例（週1回・火曜夜のみ）
+
+crontab -e で編集し、**日曜 3:00 の行を削除**して、次の1本だけにします。
+
+  0 23 * * 2 CRON_INVOKED=1 cd "/Users/yutaka/.../car_scraper" && ./run_scheduler.sh >> .../logs/cron.log 2>&1
+
+これで「同じメーカーを週に2回」は解消されます。
